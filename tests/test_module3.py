@@ -65,9 +65,13 @@ def test_context_switch_cost_zero_is_identity():
     assert overhead == 0
 
 
-def test_context_switch_cost_increases_every_completion():
+def test_context_switch_cost_increases_completion():
     procs = load_processes(TEST1)
     base_segments, base_per = fcfs(procs)
     _, per, _ = with_context_switch_cost(procs, base_segments, cost=2)
-    for pid in per:
+    # the first dispatched process is unaffected; everyone queued behind pays
+    assert per["P1"]["turnaround"] == base_per["P1"]["turnaround"]
+    for pid in ("P2", "P3", "P4"):
         assert per[pid]["turnaround"] > base_per[pid]["turnaround"]
+    total = lambda d: sum(m["turnaround"] for m in d.values())
+    assert total(per) > total(base_per)

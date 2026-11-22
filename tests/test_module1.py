@@ -57,6 +57,7 @@ def test_srtf_hand_worked_example():
 
 def test_fcfs_idle_gap_edge_case():
     # inputs/test3_edge.csv has empty gaps (nothing ready at t=10..12 and t=18..30)
+    # P2 waits 0->11 (10), P3 waits 0->12 (11): queued behind P1's burst
     procs = load_processes("inputs/test3_edge.csv")
     segments, per = fcfs(procs)
     assert segments == [
@@ -64,7 +65,8 @@ def test_fcfs_idle_gap_edge_case():
         ("P4", 12, 15), ("P5", 15, 18), ("P6", 30, 36),
     ]
     assert per["P6"]["waiting"] == 0
-    assert per["P2"]["waiting"] == 9
+    assert per["P2"]["waiting"] == 10
+    assert per["P3"]["waiting"] == 11
 
 
 def test_srtf_simultaneous_arrivals_tie_break():

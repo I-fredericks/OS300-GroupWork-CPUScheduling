@@ -6,9 +6,10 @@ RR q=2 on inputs/test1_basic.csv, arrivals-first requeue convention:
   slices: P1 0-2, P2 2-4, P1 4-6, P3 6-7, P2 7-9, P4 9-11, P1 11-13, P4 13-15, P1 15-16
   waiting 9,3,2,6 -> avg 5.0; response 0,0,2,4 -> avg 1.5
 
-RR q=4 on the same input:
-  slices: P1 0-4, P2 4-8, P1 8-11, P3 11-12, P4 12-16
-  waiting 4,2,7,7 -> avg 5.0 (same); response 0,2,7,7 -> avg 4.0 (worse)
+RR q=4 on the same input (arrivals <= slice end join the queue before the
+  preempted process re-enters; P1 re-queues behind P2 and P3):
+  slices: P1 0-4, P2 4-8, P3 8-9, P1 9-12, P4 12-16
+  waiting 5,2,4,7 -> avg 4.5; response 0,2,4,7 -> avg 3.25
 
 Aging, interval=1, procs P1(0,3,p5) P2(0,4,p1) P3(4,3,p2):
   P2 0-4; at t=4: P1 effective 5-4=1 beats fresh P3 effective 2 -> P1 4-7, P3 7-10
@@ -40,12 +41,15 @@ def test_round_robin_q4_hand_worked_differs_from_q2():
     segments_q4, per_q4 = round_robin(procs, quantum=4)
     segments_q2, per_q2 = round_robin(procs, quantum=2)
     assert segments_q4 == [
-        ("P1", 0, 4), ("P2", 4, 8), ("P1", 8, 11), ("P3", 11, 12),
+        ("P1", 0, 4), ("P2", 4, 8), ("P3", 8, 9), ("P1", 9, 12),
         ("P4", 12, 16),
     ]
-    # same average waiting time (5.0), worse average response time
-    assert per_q4["P2"]["response"] == 2
-    assert per_q2["P3"]["response"] == 2 and per_q4["P3"]["response"] == 7
+    # smaller quantum: better average response time, worse average waiting
+    avg = lambda per: sum(m["waiting"] for m in per.values()) / len(per)
+    assert avg(per_q2) == pytest.approx(5.0)
+    assert avg(per_q4) == pytest.approx(4.5)
+    assert per_q2["P3"]["response"] == 2 and per_q4["P3"]["response"] == 4
+    assert per_q4["P4"]["response"] == 7
 
 
 def test_priority_aging_beats_fresh_higher_priority():

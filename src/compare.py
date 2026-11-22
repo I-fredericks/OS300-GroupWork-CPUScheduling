@@ -77,7 +77,7 @@ def print_comparison_table(results):
     results: list of dicts with keys "name", "per", "avg" (from metrics_from_segments).
     """
     ordered = sorted(results, key=lambda r: r["avg"]["waiting"])
-    header = f"{'Algorithm':<28}{'Avg wait':>10}{'Avg turnaround':>16}{'Avg response':>14}{'Makespan':>10}"
+    header = f"{'Algorithm':<38}{'Avg wait':>10}{'Avg turnaround':>16}{'Avg response':>14}{'Makespan':>10}"
     print("\n" + "=" * len(header))
     print("COMPARISON TABLE (sorted by average waiting time)")
     print(header)
@@ -85,7 +85,7 @@ def print_comparison_table(results):
     for r in ordered:
         a = r["avg"]
         print(
-            f"{r['name']:<28}{a['waiting']:>10.2f}{a['turnaround']:>16.2f}"
+            f"{r['name']:<38}{a['waiting']:>10.2f}{a['turnaround']:>16.2f}"
             f"{a['response']:>14.2f}{a['makespan']:>10.0f}"
         )
     print("=" * len(header))
